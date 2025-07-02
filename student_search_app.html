@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学籍番号検索システム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', 'Meiryo', 'メイリオ', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .file-upload-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-section.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #6c757d;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .file-label:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .file-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .search-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 50px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+            background: #f8f9fa;
+        }
+
+        input[type="text"]:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[type="text"]:disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .search-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: left;
+        }
+
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .student-id {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .student-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .student-details {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .detail-row {
+            margin-bottom: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+            display: inline-block;
+            min-width: 120px;
+        }
+
+        .no-result {
+            color: #999;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .clear-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #5a6268;
+        }
+
+        .status-message {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            input[type="text"] {
+                padding: 12px 16px;
+                font-size: 16px;
+            }
+            
+            .search-btn {
+                padding: 12px 30px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 学籍番号検索</h1>
+        
+        <div class="file-upload-section" id="fileUploadSection">
+            <label for="csvFile" class="file-label">📁 CSVファイルを選択</label>
+            <input type="file" id="csvFile" class="file-input" accept=".csv" onchange="handleFileUpload(event)">
+            <div class="file-info">
+                エクセルファイルをCSV形式で保存してアップロードしてください<br>
+                <small>列構成: A列(教材・コーディネーター), B列(クラス名), C列(学籍番号), D列(名前)</small>
+            </div>
+            <div id="statusMessage"></div>
+        </div>
+        
+        <div class="search-section">
+            <div class="input-group">
+                <input type="text" id="searchInput" placeholder="まずCSVファイルをアップロードしてください" maxlength="20" disabled>
+            </div>
+            <button class="search-btn" onclick="searchStudent()" disabled id="searchBtn">検索</button>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <div id="resultContent"></div>
+            <button class="clear-btn" onclick="clearResults()">結果をクリア</button>
+        </div>
+    </div>
+
+    <script>
+        let studentData = {};
+        let isDataLoaded = false;
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+                showStatus('CSVファイルを選択してください', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    parseCSVData(e.target.result);
+                } catch (error) {
+                    showStatus('ファイルの読み込みに失敗しました', 'error');
+                    console.error('File reading error:', error);
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function parseCSVData(csvText) {
+            const lines = csvText.split('\n');
+            const data = {};
+            let processedCount = 0;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                // CSVの行を解析（カンマ区切り、ダブルクォート対応）
+                const columns = parseCSVLine(line);
+                
+                if (columns.length >= 4) {
+                    const textbookCoordinator = columns[0] ? columns[0].trim() : '';
+                    const className = columns[1] ? columns[1].trim() : '';
+                    const studentId = columns[2] ? columns[2].trim() : '';
+                    const studentName = columns[3] ? columns[3].trim() : '';
+
+                    if (studentId && studentName) {
+                        data[studentId] = {
+                            name: studentName,
+                            className: className,
+                            textbookCoordinator: textbookCoordinator
+                        };
+                        processedCount++;
+                    }
+                }
+            }
+
+            if (processedCount > 0) {
+                studentData = data;
+                isDataLoaded = true;
+                enableSearch();
+                showStatus(`${processedCount}件のデータを読み込みました`, 'success');
+            } else {
+                showStatus('有効なデータが見つかりませんでした', 'error');
+            }
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            
+            return result;
+        }
+
+        function enableSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+            
+            searchInput.disabled = false;
+            searchInput.placeholder = '学籍番号を入力してください';
+            searchBtn.disabled = false;
+            searchInput.focus();
+        }
+
+        function searchStudent() {
+            if (!isDataLoaded) {
+                alert('まずCSVファイルをアップロードしてください');
+                return;
+            }
+
+            const searchInput = document.getElementById('searchInput');
+            const resultSection = document.getElementById('resultSection');
+            const resultContent = document.getElementById('resultContent');
+            const searchValue = searchInput.value.trim();
+
+            if (!searchValue) {
+                alert('学籍番号を入力してください');
+                return;
+            }
+
+            const student = studentData[searchValue];
+            
+            if (student) {
+                resultContent.innerHTML = `
+                    <div class="result-item">
+                        <div class="student-id">学籍番号: ${searchValue}</div>
+                        <div class="student-name">${student.name}</div>
+                        <div class="student-details">
+                            <div class="detail-row">
+                                <span class="detail-label">クラス名:</span>
+                                <span>${student.className || '未設定'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">使用教材・コーディネーター:</span>
+                                <span>${student.textbookCoordinator || '未設定'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultContent.innerHTML = `
+                    <div class="no-result">
+                        学籍番号「${searchValue}」の学生は見つかりませんでした。<br>
+                        学籍番号を確認して再度お試しください。
+                    </div>
+                `;
+            }
+
+            resultSection.classList.add('show');
+        }
+
+        function clearResults() {
+            const resultSection = document.getElementById('resultSection');
+            const searchInput = document.getElementById('searchInput');
+            
+            resultSection.classList.remove('show');
+            searchInput.value = '';
+            if (isDataLoaded) {
+                searchInput.focus();
+            }
+        }
+
+        // Enterキーで検索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !this.disabled) {
+                searchStudent();
+            }
+        });
+
+        // ドラッグ&ドロップ対応
+        const fileUploadSection = document.getElementById('fileUploadSection');
+        
+        fileUploadSection.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        fileUploadSection.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        fileUploadSection.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('csvFile').files = files;
+                handleFileUpload({ target: { files: files } });
+            }
+        });
+    </script>
+</body>
+</html>
